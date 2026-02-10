@@ -1,1 +1,14 @@
-// Scaffold placeholder: implementation pending.
+import authRoutes from './auth.routes.js';
+
+export default async function v1Routes(fastify) {
+  fastify.get('/health', async () => {
+    const result = await fastify.db.query('SELECT 1 AS ok');
+
+    return {
+      status: 'ok',
+      database: result.rows[0]?.ok === 1 ? 'ok' : 'unknown'
+    };
+  });
+
+  fastify.register(authRoutes);
+}

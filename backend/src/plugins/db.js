@@ -1,1 +1,1 @@
-// Scaffold placeholder: implementation pending.
+export { default } from './db.plugin.js';

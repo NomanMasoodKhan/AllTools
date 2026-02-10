@@ -1,1 +1,1 @@
-// Scaffold placeholder: implementation pending.
+export { default } from './v1/index.routes.js';

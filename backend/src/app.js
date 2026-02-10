@@ -1,1 +1,1 @@
-// Scaffold placeholder: implementation pending.
+export { buildApp } from './index.js';

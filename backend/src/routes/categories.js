@@ -1,1 +1,1 @@
-// Scaffold placeholder: implementation pending.
+// Deprecated route placeholder kept for backwards compatibility.

@@ -1,1 +1,1 @@
-// Scaffold placeholder: implementation pending.
+export { env as config } from './config/env.js';

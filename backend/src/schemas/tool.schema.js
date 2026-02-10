@@ -1,1 +1,1 @@
-// Scaffold placeholder: implementation pending.
+// Reserved for tool schemas.
