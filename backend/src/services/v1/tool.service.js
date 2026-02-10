@@ -3,7 +3,8 @@ import {
   createToolWithCategories,
   getCategoriesByIds,
   getDeveloperProfileByUserId,
-  getToolForModerationById
+  getToolForModerationById,
+  listPendingTools
 } from '../../repositories/v1/tool.repository.js';
 
 export async function submitTool(db, user, payload) {
@@ -25,8 +26,7 @@ export async function submitTool(db, user, payload) {
   return createToolWithCategories(db, {
     ...payload,
     developerProfileId: developerProfile.id,
-    developer_profile_link:
-      developerProfile.website_url ?? `mailto:${user.email}`,
+    developer_profile_link: developerProfile.website_url ?? `mailto:${user.email}`,
     use_cases: ['Provided by developer during submission review'],
     known_limitations: ['To be expanded by developer after initial submission'],
     tested_environments: ['To be provided during moderation process'],
@@ -34,7 +34,11 @@ export async function submitTool(db, user, payload) {
   });
 }
 
-export async function approveTool(db, user, toolId, payload) {
+export async function getPendingTools(db) {
+  return listPendingTools(db);
+}
+
+export async function moderateTool(db, user, toolId, payload) {
   const tool = await getToolForModerationById(db, toolId);
 
   if (!tool) {
@@ -43,10 +47,16 @@ export async function approveTool(db, user, toolId, payload) {
     throw error;
   }
 
+  if (tool.approval_status !== 'pending') {
+    const error = new Error('Tool has already been moderated.');
+    error.statusCode = 409;
+    throw error;
+  }
+
   return createAdminApproval(db, {
     toolId,
     adminUserId: user.sub,
     decision: payload.decision,
-    notes: payload.notes
+    reason: payload.reason
   });
 }

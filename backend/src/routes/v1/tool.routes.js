@@ -10,6 +10,12 @@ export default async function toolRoutes(fastify) {
     controller.submit
   );
 
+  fastify.get(
+    '/admin/tools/pending',
+    { preHandler: [requireAuth, requireRole(['admin'])] },
+    controller.listPending
+  );
+
   fastify.post(
     '/tools/:toolId/approve',
     { preHandler: [requireAuth, requireRole(['admin'])] },

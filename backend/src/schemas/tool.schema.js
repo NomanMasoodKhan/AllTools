@@ -15,10 +15,20 @@ export const createToolSchema = z.object({
   version: z.string().min(1).max(40)
 });
 
-export const approveToolSchema = z.object({
-  decision: z.enum(['approved', 'rejected']),
-  notes: z.string().max(2000).optional()
-});
+export const approveToolSchema = z
+  .object({
+    decision: z.enum(['approved', 'rejected']),
+    reason: z.string().trim().min(3).max(2000).optional()
+  })
+  .superRefine((value, ctx) => {
+    if (value.decision === 'rejected' && !value.reason) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'reason is required when decision is rejected.',
+        path: ['reason']
+      });
+    }
+  });
 
 export const toolIdParamSchema = z.object({
   toolId: uuidSchema

@@ -3,7 +3,7 @@ import {
   createToolSchema,
   toolIdParamSchema
 } from '../../schemas/tool.schema.js';
-import { approveTool, submitTool } from '../../services/v1/tool.service.js';
+import { getPendingTools, moderateTool, submitTool } from '../../services/v1/tool.service.js';
 
 export function buildToolController(fastify) {
   return {
@@ -24,6 +24,15 @@ export function buildToolController(fastify) {
       });
     },
 
+    async listPending(_request, reply) {
+      const tools = await getPendingTools(fastify.db);
+
+      return reply.send({
+        tools,
+        count: tools.length
+      });
+    },
+
     async approve(request, reply) {
       const paramsParsed = toolIdParamSchema.safeParse(request.params);
       if (!paramsParsed.success) {
@@ -41,7 +50,7 @@ export function buildToolController(fastify) {
         });
       }
 
-      const approval = await approveTool(
+      const approval = await moderateTool(
         fastify.db,
         request.user,
         paramsParsed.data.toolId,

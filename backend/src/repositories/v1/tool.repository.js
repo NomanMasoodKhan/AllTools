@@ -92,6 +92,30 @@ export async function createToolWithCategories(db, payload) {
   }
 }
 
+export async function listPendingTools(db) {
+  const result = await db.query(
+    `SELECT
+       t.id,
+       t.name,
+       t.short_description,
+       t.tool_type,
+       t.pricing_model,
+       t.created_at,
+       dp.display_name AS developer_name,
+       COALESCE(array_agg(DISTINCT c.name) FILTER (WHERE c.name IS NOT NULL), '{}') AS categories
+     FROM tools t
+     INNER JOIN developer_profiles dp ON dp.id = t.developer_profile_id
+     LEFT JOIN tool_categories tc ON tc.tool_id = t.id
+     LEFT JOIN categories c ON c.id = tc.category_id
+     WHERE t.approval_status = 'pending'
+       AND t.publication_status = 'draft'
+     GROUP BY t.id, dp.display_name
+     ORDER BY t.created_at ASC`
+  );
+
+  return result.rows;
+}
+
 export async function getToolForModerationById(db, toolId) {
   const result = await db.query(
     `SELECT id, approval_status, publication_status
@@ -113,7 +137,7 @@ export async function createAdminApproval(db, payload) {
       `INSERT INTO admin_approvals (tool_id, admin_user_id, decision, notes)
        VALUES ($1, $2, $3, $4)
        RETURNING id, tool_id, admin_user_id, decision, notes, decided_at`,
-      [payload.toolId, payload.adminUserId, payload.decision, payload.notes ?? null]
+      [payload.toolId, payload.adminUserId, payload.decision, payload.reason ?? null]
     );
 
     if (payload.decision === 'approved') {
