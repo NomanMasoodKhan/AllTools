@@ -1,4 +1,5 @@
 import authRoutes from './auth.routes.js';
+import toolRoutes from './tool.routes.js';
 
 export default async function v1Routes(fastify) {
   fastify.get('/health', async () => {
@@ -11,4 +12,5 @@ export default async function v1Routes(fastify) {
   });
 
   fastify.register(authRoutes);
+  fastify.register(toolRoutes);
 }
