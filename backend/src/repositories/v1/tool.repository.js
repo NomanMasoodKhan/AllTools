@@ -170,3 +170,73 @@ export async function createAdminApproval(db, payload) {
     client.release();
   }
 }
+
+export async function listPublicTools(db, filters) {
+  const values = [filters.limit, filters.offset];
+  const whereClauses = [
+    "t.approval_status = 'approved'",
+    "t.publication_status = 'published'"
+  ];
+
+  if (filters.search) {
+    values.push(filters.search);
+    whereClauses.push(
+      `to_tsvector('simple', COALESCE(t.name, '') || ' ' || COALESCE(t.short_description, '') || ' ' || COALESCE(t.long_description, ''))
+       @@ plainto_tsquery('simple', $${values.length})`
+    );
+  }
+
+  if (filters.category_id) {
+    values.push(filters.category_id);
+    whereClauses.push(
+      `EXISTS (
+         SELECT 1
+         FROM tool_categories tc_filter
+         WHERE tc_filter.tool_id = t.id
+           AND tc_filter.category_id = $${values.length}
+       )`
+    );
+  }
+
+  if (filters.tool_type) {
+    values.push(filters.tool_type);
+    whereClauses.push(`t.tool_type = $${values.length}`);
+  }
+
+  if (filters.pricing_model) {
+    values.push(filters.pricing_model);
+    whereClauses.push(`t.pricing_model = $${values.length}`);
+  }
+
+  const whereSql = whereClauses.join(' AND ');
+
+  const query = `
+    SELECT
+      t.id,
+      t.name,
+      t.short_description,
+      t.tool_type,
+      t.pricing_model,
+      t.version,
+      t.published_at,
+      dp.display_name AS developer_name,
+      COALESCE(array_agg(DISTINCT c.name) FILTER (WHERE c.name IS NOT NULL), '{}') AS categories,
+      COUNT(*) OVER ()::INT AS total_count
+    FROM tools t
+    INNER JOIN developer_profiles dp ON dp.id = t.developer_profile_id
+    LEFT JOIN tool_categories tc ON tc.tool_id = t.id
+    LEFT JOIN categories c ON c.id = tc.category_id
+    WHERE ${whereSql}
+    GROUP BY t.id, dp.display_name
+    ORDER BY t.published_at DESC, t.created_at DESC
+    LIMIT $1 OFFSET $2
+  `;
+
+  const result = await db.query(query, values);
+  const total = result.rows[0]?.total_count ?? 0;
+
+  return {
+    tools: result.rows.map(({ total_count, ...tool }) => tool),
+    total
+  };
+}

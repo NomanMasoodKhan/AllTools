@@ -4,7 +4,8 @@ import {
   getCategoriesByIds,
   getDeveloperProfileByUserId,
   getToolForModerationById,
-  listPendingTools
+  listPendingTools,
+  listPublicTools
 } from '../../repositories/v1/tool.repository.js';
 
 export async function submitTool(db, user, payload) {
@@ -59,4 +60,9 @@ export async function moderateTool(db, user, toolId, payload) {
     decision: payload.decision,
     reason: payload.reason
   });
+}
+
+
+export async function searchPublicTools(db, filters) {
+  return listPublicTools(db, filters);
 }

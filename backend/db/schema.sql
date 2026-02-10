@@ -128,6 +128,15 @@ CREATE INDEX IF NOT EXISTS idx_admin_approvals_tool_id ON admin_approvals(tool_i
 CREATE INDEX IF NOT EXISTS idx_admin_approvals_admin_user_id ON admin_approvals(admin_user_id);
 CREATE INDEX IF NOT EXISTS idx_admin_approvals_decided_at_desc ON admin_approvals(decided_at DESC);
 
+CREATE INDEX IF NOT EXISTS idx_tools_public_filters
+  ON tools(approval_status, publication_status, tool_type, pricing_model, published_at DESC);
+CREATE INDEX IF NOT EXISTS idx_tool_categories_category_id_tool_id
+  ON tool_categories(category_id, tool_id);
+CREATE INDEX IF NOT EXISTS idx_tools_public_search_tsv
+  ON tools USING GIN (
+    to_tsvector('simple', COALESCE(name, '') || ' ' || COALESCE(short_description, '') || ' ' || COALESCE(long_description, ''))
+  );
+
 -- Ensure admin approvals are recorded only by users with admin role.
 CREATE OR REPLACE FUNCTION enforce_admin_role_for_approvals()
 RETURNS TRIGGER

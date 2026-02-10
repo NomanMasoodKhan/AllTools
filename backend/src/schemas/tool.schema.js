@@ -33,3 +33,12 @@ export const approveToolSchema = z
 export const toolIdParamSchema = z.object({
   toolId: uuidSchema
 });
+
+export const listPublicToolsQuerySchema = z.object({
+  search: z.string().trim().min(1).max(120).optional(),
+  category_id: uuidSchema.optional(),
+  tool_type: z.enum(['script', 'saas', 'rule_pack', 'framework']).optional(),
+  pricing_model: z.enum(['free', 'paid', 'freemium']).optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+  offset: z.coerce.number().int().min(0).default(0)
+});

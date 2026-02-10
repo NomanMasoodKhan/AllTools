@@ -22,15 +22,5 @@ export default async function toolRoutes(fastify) {
     controller.approve
   );
 
-  fastify.get('/tools/public', async () => {
-    const result = await fastify.db.query(
-      `SELECT id, name, short_description, tool_type, pricing_model, version, published_at
-       FROM tools
-       WHERE approval_status = 'approved'
-         AND publication_status = 'published'
-       ORDER BY published_at DESC NULLS LAST`
-    );
-
-    return { tools: result.rows };
-  });
+  fastify.get('/tools/public', controller.listPublic);
 }

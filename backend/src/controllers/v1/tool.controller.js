@@ -1,9 +1,15 @@
 import {
   approveToolSchema,
   createToolSchema,
+  listPublicToolsQuerySchema,
   toolIdParamSchema
 } from '../../schemas/tool.schema.js';
-import { getPendingTools, moderateTool, submitTool } from '../../services/v1/tool.service.js';
+import {
+  getPendingTools,
+  moderateTool,
+  searchPublicTools,
+  submitTool
+} from '../../services/v1/tool.service.js';
 
 export function buildToolController(fastify) {
   return {
@@ -30,6 +36,26 @@ export function buildToolController(fastify) {
       return reply.send({
         tools,
         count: tools.length
+      });
+    },
+
+
+    async listPublic(request, reply) {
+      const parsed = listPublicToolsQuerySchema.safeParse(request.query ?? {});
+      if (!parsed.success) {
+        return reply.code(400).send({
+          message: 'Invalid public tools query parameters.',
+          issues: parsed.error.issues
+        });
+      }
+
+      const result = await searchPublicTools(fastify.db, parsed.data);
+
+      return reply.send({
+        tools: result.tools,
+        total: result.total,
+        limit: parsed.data.limit,
+        offset: parsed.data.offset
       });
     },
 
