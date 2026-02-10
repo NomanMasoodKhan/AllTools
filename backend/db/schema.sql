@@ -62,6 +62,7 @@ CREATE TABLE IF NOT EXISTS tools (
   version TEXT NOT NULL,
   tags TEXT[] NOT NULL DEFAULT '{}',
   last_updated TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  view_count INTEGER NOT NULL DEFAULT 0 CHECK (view_count >= 0),
 
   -- Moderation / publishing fields
   approval_status TEXT NOT NULL DEFAULT 'pending'
@@ -121,6 +122,7 @@ CREATE INDEX IF NOT EXISTS idx_tools_developer_profile_id ON tools(developer_pro
 CREATE INDEX IF NOT EXISTS idx_tools_approval_status ON tools(approval_status);
 CREATE INDEX IF NOT EXISTS idx_tools_publication_status ON tools(publication_status);
 CREATE INDEX IF NOT EXISTS idx_tools_last_updated_desc ON tools(last_updated DESC);
+CREATE INDEX IF NOT EXISTS idx_tools_view_count_desc ON tools(view_count DESC);
 CREATE INDEX IF NOT EXISTS idx_tool_categories_category_id ON tool_categories(category_id);
 CREATE INDEX IF NOT EXISTS idx_reviews_tool_id ON reviews(tool_id);
 CREATE INDEX IF NOT EXISTS idx_reviews_user_id ON reviews(user_id);

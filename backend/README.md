@@ -129,3 +129,56 @@ Fastify backend for CyberMart MVP.
 - `reviews` table already enforces one review per user per tool using `UNIQUE (tool_id, user_id)`.
 - Service layer checks tool moderation/publication state before insert and before listing.
 - DB trigger `enforce_review_on_public_tool` blocks insert/update reviews unless tool is `approved` + `published`.
+
+## Developer Analytics (MVP, Read-only)
+
+### API Endpoint
+
+- `GET /api/v1/developer/analytics` (authenticated `developer` only)
+
+### Metrics
+
+- `tool_views`: sourced from `tools.view_count`
+- `review_count`: total reviews per tool
+- `average_rating`: average review rating per tool
+
+### SQL Queries
+
+Per-tool aggregation query:
+
+```sql
+SELECT
+  t.id AS tool_id,
+  t.name AS tool_name,
+  t.approval_status,
+  t.publication_status,
+  t.view_count AS tool_views,
+  COUNT(r.id)::INT AS review_count,
+  COALESCE(ROUND(AVG(r.rating)::numeric, 2), 0)::FLOAT8 AS average_rating
+FROM developer_profiles dp
+INNER JOIN tools t ON t.developer_profile_id = dp.id
+LEFT JOIN reviews r ON r.tool_id = t.id
+WHERE dp.user_id = $1
+GROUP BY t.id
+ORDER BY t.created_at DESC;
+```
+
+Summary aggregation query:
+
+```sql
+SELECT
+  COUNT(t.id)::INT AS tool_count,
+  COALESCE(SUM(t.view_count), 0)::INT AS total_views,
+  COUNT(r.id)::INT AS total_reviews,
+  COALESCE(ROUND(AVG(r.rating)::numeric, 2), 0)::FLOAT8 AS average_rating
+FROM developer_profiles dp
+LEFT JOIN tools t ON t.developer_profile_id = dp.id
+LEFT JOIN reviews r ON r.tool_id = t.id
+WHERE dp.user_id = $1;
+```
+
+### Constraints
+
+- Read-only endpoint: no mutations.
+- No tracking scripts are used.
+- Aggregations are computed with simple SQL queries.
