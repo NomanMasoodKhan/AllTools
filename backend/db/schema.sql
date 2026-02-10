@@ -245,3 +245,30 @@ CREATE TRIGGER trg_enforce_approval_record_before_publish
 BEFORE INSERT OR UPDATE OF publication_status ON tools
 FOR EACH ROW
 EXECUTE FUNCTION enforce_approval_record_before_publish();
+
+
+-- Enforce: reviews can only be created for approved and published tools.
+CREATE OR REPLACE FUNCTION enforce_review_on_public_tool()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM tools t
+    WHERE t.id = NEW.tool_id
+      AND t.approval_status = 'approved'
+      AND t.publication_status = 'published'
+  ) THEN
+    RAISE EXCEPTION 'reviews are allowed only for approved and published tools';
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_enforce_review_on_public_tool ON reviews;
+CREATE TRIGGER trg_enforce_review_on_public_tool
+BEFORE INSERT OR UPDATE ON reviews
+FOR EACH ROW
+EXECUTE FUNCTION enforce_review_on_public_tool();

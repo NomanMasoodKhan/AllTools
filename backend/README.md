@@ -100,3 +100,32 @@ Fastify backend for CyberMart MVP.
   "offset": 0
 }
 ```
+
+## Review System (MVP)
+
+### Rules Enforced
+
+- Only authenticated users can create reviews.
+- A user can submit only one review per tool.
+- Reviews include both a numeric rating and written content.
+- Reviews are visible only for approved and published tools.
+
+### API Endpoints
+
+- `GET /api/v1/tools/:toolId/reviews` (public)
+  - Returns reviews only when the target tool is approved and published.
+- `POST /api/v1/tools/:toolId/reviews` (authenticated)
+  - Creates one review per user for the tool.
+
+### Validation Rules
+
+- `toolId` must be a valid UUID.
+- `rating` must be an integer from `1` to `5`.
+- `title` is optional, `3..140` chars when provided.
+- `content` is required, `10..4000` chars.
+
+### Database Logic
+
+- `reviews` table already enforces one review per user per tool using `UNIQUE (tool_id, user_id)`.
+- Service layer checks tool moderation/publication state before insert and before listing.
+- DB trigger `enforce_review_on_public_tool` blocks insert/update reviews unless tool is `approved` + `published`.
